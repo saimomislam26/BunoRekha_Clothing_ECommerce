@@ -1,5 +1,6 @@
 import ContactForm from '@/components/sections/contact/ContactForm';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import Image from 'next/image';
 
 export default function ContactPage() {
   return (
