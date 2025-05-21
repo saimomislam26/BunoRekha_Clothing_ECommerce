@@ -1,12 +1,21 @@
 
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { LayoutDashboard, Package, ShoppingCart, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export const metadata: Metadata = {
   title: 'BunoRekha Admin',
   description: 'Admin Dashboard for BunoRekha Style Haus',
 };
+
+const navItems = [
+  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+  { href: '/admin/products', label: 'Products', icon: Package },
+  { href: '/admin/customers', label: 'Customers', icon: Users },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
+];
 
 export default function AdminLayout({
   children,
@@ -19,67 +28,43 @@ export default function AdminLayout({
         <div className="flex h-16 items-center border-b px-6">
           <Link href="/admin/dashboard" className="flex items-center gap-2 font-semibold">
             <LayoutDashboard className="h-6 w-6 text-primary" />
-            <span className="text-xl">BunoRekha Admin</span>
+            <span className="text-xl">BunoRekha</span>
           </Link>
         </div>
         <nav className="flex-1 overflow-auto py-4">
           <ul className="grid items-start px-4 text-sm font-medium">
-            <li>
-              <Link
-                href="/admin/dashboard"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
-              >
-                <LayoutDashboard className="h-4 w-4" />
-                Dashboard
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                Orders (Placeholder)
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
-              >
-                <Package className="h-4 w-4" />
-                Products (Placeholder)
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
-              >
-                <Users className="h-4 w-4" />
-                Customers (Placeholder)
-              </Link>
-            </li>
-            <li>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
-              >
-                <Settings className="h-4 w-4" />
-                Settings (Placeholder)
-              </Link>
-            </li>
+            {navItems.map((item) => (
+              <li key={item.label}>
+                <Link
+                  href={item.href}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary hover:bg-primary/10"
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              </li>
+            ))}
           </ul>
         </nav>
+        <div className="mt-auto p-4 border-t">
+            <Button variant="outline" className="w-full">
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+            </Button>
+        </div>
       </aside>
       <div className="flex flex-1 flex-col sm:pl-64"> {/* Adjust pl for sidebar width */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
           <div className="sm:hidden">
              {/* Placeholder for mobile menu trigger */}
+             <Button variant="outline" size="icon">
+                <LayoutDashboard className="h-5 w-5" />
+             </Button>
           </div>
           <div className="ml-auto flex items-center gap-2">
              {/* Placeholder for user menu or actions */}
             <span className="text-sm text-muted-foreground">Admin User</span>
+             {/* You could add a dropdown menu for user profile/logout here */}
           </div>
         </header>
         <main className="flex-1 p-4 sm:px-6 sm:py-0">
