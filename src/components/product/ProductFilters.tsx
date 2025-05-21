@@ -1,41 +1,80 @@
+
 "use client";
 
 import { useState } from 'react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+// import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Not used currently
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Filter, X } from 'lucide-react';
 
-const uniqueCategories = ['Sarees', 'Kurtas', 'Tops', 'Accessories', 'Jewelry']; // Example data
-const uniqueSizes = ['S', 'M', 'L', 'XL', 'Free Size', 'One Size']; // Example data
-const uniqueColors = ['Gold', 'Charcoal', 'Natural Linen', 'Light Charcoal']; // Example data
-const uniqueStyles = ['Ethnic Festive', 'Modern Ethnic', 'Elegant Evening', 'Casual Chic', 'Artisanal', 'Minimalist']; // Example data
+const uniqueCategories = ['Sarees', 'Kurtas', 'Tops', 'Accessories', 'Jewelry'];
+const uniqueSizes = ['S', 'M', 'L', 'XL', 'Free Size', 'One Size'];
+const uniqueColors = ['Gold', 'Charcoal', 'Natural Linen', 'Light Charcoal', 'Deep Charcoal', 'Charcoal & Gold', 'Charcoal Gold']; // Added from product data
+const uniqueStyles = ['Ethnic Festive', 'Modern Ethnic', 'Elegant Evening', 'Casual Chic', 'Artisanal', 'Minimalist'];
 
-const ProductFilters = () => {
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
+export interface FilterCriteria {
+  categories: string[];
+  sizes: string[];
+  colors: string[];
+  styles: string[];
+  priceRange: [number, number];
+}
 
-  // Placeholder for selected filters state
-  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  // const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
-  // ... and so on
+interface ProductFiltersProps {
+  onApplyFilters: (filters: FilterCriteria) => void;
+  initialFilters?: Partial<FilterCriteria>;
+}
+
+const ProductFilters = ({ onApplyFilters, initialFilters }: ProductFiltersProps) => {
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialFilters?.categories || []);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(initialFilters?.sizes || []);
+  const [selectedColors, setSelectedColors] = useState<string[]>(initialFilters?.colors || []);
+  const [selectedStyles, setSelectedStyles] = useState<string[]>(initialFilters?.styles || []);
+  const [priceRange, setPriceRange] = useState<[number, number]>(initialFilters?.priceRange || [0, 500]);
+
+  const handleCheckboxChange = (
+    setter: React.Dispatch<React.SetStateAction<string[]>>,
+    currentValues: string[],
+    value: string,
+    checked: boolean | 'indeterminate'
+  ) => {
+    if (checked === true) {
+      setter([...currentValues, value]);
+    } else {
+      setter(currentValues.filter((v) => v !== value));
+    }
+  };
 
   const handleApplyFilters = () => {
-    // Logic to apply filters would go here
-    console.log("Applying filters with price range:", priceRange);
+    onApplyFilters({
+      categories: selectedCategories,
+      sizes: selectedSizes,
+      colors: selectedColors,
+      styles: selectedStyles,
+      priceRange,
+    });
   };
   
   const handleClearFilters = () => {
-    setPriceRange([0, 500]);
-    // Clear other selected filters
-    console.log("Filters cleared");
+    setSelectedCategories([]);
+    setSelectedSizes([]);
+    setSelectedColors([]);
+    setSelectedStyles([]);
+    setPriceRange([0, 500]); // Reset price range to a default max, or could be dynamic
+    onApplyFilters({
+      categories: [],
+      sizes: [],
+      colors: [],
+      styles: [],
+      priceRange: [0, 1000], // Make sure this max aligns with slider's max
+    });
   };
 
-
   return (
-    <div className="bg-card p-6 rounded-lg shadow-md">
+    <div className="bg-card p-6 rounded-lg shadow-md sticky top-24"> {/* Added sticky positioning */}
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-semibold text-primary flex items-center">
           <Filter className="mr-2 h-5 w-5" />
@@ -52,8 +91,12 @@ const ProductFilters = () => {
           <AccordionContent className="space-y-2 pt-2">
             {uniqueCategories.map((category) => (
               <div key={category} className="flex items-center space-x-2">
-                <Checkbox id={`cat-${category}`} />
-                <Label htmlFor={`cat-${category}`} className="font-normal text-sm text-foreground/80">{category}</Label>
+                <Checkbox 
+                  id={`cat-${category}`} 
+                  checked={selectedCategories.includes(category)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setSelectedCategories, selectedCategories, category, checked)}
+                />
+                <Label htmlFor={`cat-${category}`} className="font-normal text-sm text-foreground/80 cursor-pointer">{category}</Label>
               </div>
             ))}
           </AccordionContent>
@@ -63,8 +106,8 @@ const ProductFilters = () => {
           <AccordionTrigger className="text-base font-medium hover:text-accent">Price Range</AccordionTrigger>
           <AccordionContent className="pt-4">
             <Slider
-              defaultValue={[priceRange[0], priceRange[1]]}
-              max={1000}
+              value={priceRange} // Controlled component
+              max={1000} // Ensure this matches clear filter
               step={10}
               onValueChange={(value) => setPriceRange(value as [number, number])}
               className="mb-2"
@@ -81,8 +124,12 @@ const ProductFilters = () => {
           <AccordionContent className="space-y-2 pt-2">
              {uniqueSizes.map((size) => (
               <div key={size} className="flex items-center space-x-2">
-                <Checkbox id={`size-${size}`} />
-                <Label htmlFor={`size-${size}`} className="font-normal text-sm text-foreground/80">{size}</Label>
+                <Checkbox 
+                  id={`size-${size}`} 
+                  checked={selectedSizes.includes(size)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setSelectedSizes, selectedSizes, size, checked)}
+                />
+                <Label htmlFor={`size-${size}`} className="font-normal text-sm text-foreground/80 cursor-pointer">{size}</Label>
               </div>
             ))}
           </AccordionContent>
@@ -93,8 +140,12 @@ const ProductFilters = () => {
           <AccordionContent className="space-y-2 pt-2">
             {uniqueColors.map((color) => (
               <div key={color} className="flex items-center space-x-2">
-                <Checkbox id={`color-${color}`} />
-                <Label htmlFor={`color-${color}`} className="font-normal text-sm text-foreground/80">{color}</Label>
+                <Checkbox 
+                  id={`color-${color}`} 
+                  checked={selectedColors.includes(color)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setSelectedColors, selectedColors, color, checked)}
+                />
+                <Label htmlFor={`color-${color}`} className="font-normal text-sm text-foreground/80 cursor-pointer">{color}</Label>
               </div>
             ))}
           </AccordionContent>
@@ -105,8 +156,12 @@ const ProductFilters = () => {
           <AccordionContent className="space-y-2 pt-2">
             {uniqueStyles.map((style) => (
               <div key={style} className="flex items-center space-x-2">
-                <Checkbox id={`style-${style}`} />
-                <Label htmlFor={`style-${style}`} className="font-normal text-sm text-foreground/80">{style}</Label>
+                <Checkbox 
+                  id={`style-${style}`} 
+                  checked={selectedStyles.includes(style)}
+                  onCheckedChange={(checked) => handleCheckboxChange(setSelectedStyles, selectedStyles, style, checked)}
+                />
+                <Label htmlFor={`style-${style}`} className="font-normal text-sm text-foreground/80 cursor-pointer">{style}</Label>
               </div>
             ))}
           </AccordionContent>
