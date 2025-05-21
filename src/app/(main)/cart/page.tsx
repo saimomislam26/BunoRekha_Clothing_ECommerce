@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { CartItem, Product, CartDocument, CartItemType } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -14,29 +14,30 @@ import { getOrCreateCartId } from '@/lib/cart-utils';
 import { placeholderProducts } from '@/lib/placeholder-data'; // To get full product details
 
 
+// Function to merge cart items from DB (which only have product IDs) with full product details
+const enrichCartItems = (dbItems: CartItemType[]): CartItem[] => {
+  return dbItems.map(dbItem => {
+    const productDetail = placeholderProducts.find(p => p.id === dbItem.productId);
+    if (!productDetail) {
+      // This case should ideally not happen if product IDs are always valid
+      console.error(`Product with ID ${dbItem.productId} not found for cart item.`);
+      // Fallback or skip item
+      return null; 
+    }
+    return {
+      ...dbItem,
+      product: productDetail,
+      id: dbItem.cartItemId, // Use cartItemId as the unique ID on the client for list keys etc.
+    };
+  }).filter(item => item !== null) as CartItem[]; // Filter out any nulls if product wasn't found
+};
+
+
 export default function CartPage() {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
-  // Function to merge cart items from DB (which only have product IDs) with full product details
-  const enrichCartItems = (dbItems: CartItemType[]): CartItem[] => {
-    return dbItems.map(dbItem => {
-      const productDetail = placeholderProducts.find(p => p.id === dbItem.productId);
-      if (!productDetail) {
-        // This case should ideally not happen if product IDs are always valid
-        console.error(`Product with ID ${dbItem.productId} not found for cart item.`);
-        // Fallback or skip item
-        return null; 
-      }
-      return {
-        ...dbItem,
-        product: productDetail,
-        id: dbItem.cartItemId, // Use cartItemId as the unique ID on the client for list keys etc.
-      };
-    }).filter(item => item !== null) as CartItem[]; // Filter out any nulls if product wasn't found
-  };
-
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -53,7 +54,31 @@ export default function CartPage() {
           method: 'GET',
           headers: { 'X-Cart-Id': cartId },
         });
-        if (!response.ok) throw new Error('Failed to fetch cart');
+
+        if (!response.ok) {
+          let errorResponseMessage = 'Failed to fetch cart'; // Default message
+          try {
+            const errorData = await response.json();
+            if (errorData && errorData.message) {
+              errorResponseMessage = errorData.message;
+            } else if (errorData && errorData.error) {
+              errorResponseMessage = errorData.error;
+            } else {
+              errorResponseMessage = `Server error: ${response.status} ${response.statusText}`;
+            }
+            console.error('API error response when fetching cart:', errorData);
+          } catch (jsonError) {
+            try {
+              const errorText = await response.text();
+              errorResponseMessage = errorText.substring(0, 200) || `Server error: ${response.status} ${response.statusText}`;
+              console.error('API error text response when fetching cart:', errorText);
+            } catch (textError) {
+               errorResponseMessage = `Server error: ${response.status} ${response.statusText}. Unable to read error body.`;
+               console.error('Failed to read error response body when fetching cart');
+            }
+          }
+          throw new Error(errorResponseMessage);
+        }
         
         const data: CartDocument = await response.json();
         if (data && data.items) {
@@ -62,8 +87,9 @@ export default function CartPage() {
             setCartItems([]);
         }
       } catch (error) {
+        const errorMessage = (error instanceof Error) ? error.message : "Could not load your cart.";
         console.error("Error fetching cart:", error);
-        toast({ title: "Error", description: "Could not load your cart.", variant: "destructive" });
+        toast({ title: "Error Loading Cart", description: errorMessage, variant: "destructive" });
         setCartItems([]);
       } finally {
         setIsLoading(false);
@@ -79,7 +105,7 @@ export default function CartPage() {
         toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
         return;
     }
-    if (newQuantity < 0) return; // Should be handled by API too, but good client check
+    if (newQuantity < 0) return;
 
     try {
         const response = await fetch('/api/cart', {
@@ -99,7 +125,7 @@ export default function CartPage() {
         if (updatedCartData && updatedCartData.items) {
             setCartItems(enrichCartItems(updatedCartData.items));
         } else {
-             setCartItems([]); // Or handle as cart becoming empty
+             setCartItems([]);
         }
         if (newQuantity === 0) {
             toast({ title: "Item Removed", description: "Item quantity set to 0 and removed." });
