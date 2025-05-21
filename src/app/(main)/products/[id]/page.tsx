@@ -1,12 +1,12 @@
 
 "use client"; 
 
-import { useState, useEffect, use } from 'react'; // Added 'use'
+import { useState, useEffect, use } from 'react';
 import Image from 'next/image';
 import { getProductBySlug, getProductById } from '@/lib/placeholder-data';
-import type { Product } from '@/types';
+import type { Product, CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Star, ShoppingCart, CheckCircle, ShieldCheck, Truck } from 'lucide-react';
+import { Star, ShoppingCart, CheckCircle, ShieldCheck, Truck, Minus, Plus } from 'lucide-react';
 import WishlistButton from '@/components/product/WishlistButton';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -14,52 +14,71 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import React from 'react'; // Added React for React.Fragment
+import React from 'react';
 
-// This is a client component because it uses hooks like useState, useEffect
-// and potentially interacts with user actions (size/color selection, add to cart).
-
-export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) { // Updated params type
-  const params = use(paramsPromise); // Resolve params using React.use()
-  const currentSlugOrId = params.id; // Use the resolved id
+export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise);
+  const currentSlugOrId = params.id;
 
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { toast } = useToast();; // Added semicolon
+  const { toast } = useToast();
 
   useEffect(() => {
-    // params.id is actually the slug from the placeholder data structure
     const fetchedProduct = getProductBySlug(currentSlugOrId) || getProductById(currentSlugOrId);
     if (fetchedProduct) {
       setProduct(fetchedProduct);
-      if (fetchedProduct.availableSizes.length > 0) {
+      if (fetchedProduct.availableSizes.length > 0 && !selectedSize) {
         setSelectedSize(fetchedProduct.availableSizes[0]);
       }
-      if (fetchedProduct.availableColors.length > 0) {
+      if (fetchedProduct.availableColors.length > 0 && !selectedColor) {
         setSelectedColor(fetchedProduct.availableColors[0]);
       }
     }
-  }, [currentSlugOrId]);; // Updated dependency and added semicolon
+  }, [currentSlugOrId, selectedSize, selectedColor]);
 
   if (!product) {
     return <div className="py-12 text-center">Loading product details or product not found...</div>;
   }
 
   const handleAddToCart = () => {
-    if (!selectedSize) {
+    if (!product) return;
+
+    if (product.availableSizes.length > 0 && !selectedSize) {
         toast({ title: "Selection Incomplete", description: "Please select a size.", variant: "destructive" });
         return;
     }
-    if (!selectedColor && product.availableColors.length > 0) {
+    if (product.availableColors.length > 0 && !selectedColor) {
         toast({ title: "Selection Incomplete", description: "Please select a color.", variant: "destructive" });
         return;
     }
-    // Logic to add to cart
-    console.log('Added to cart:', { product, selectedSize, selectedColor, quantity });
-    toast({ title: "Added to Cart!", description: `${product.name} has been added to your cart.`});
+
+    const cartItemId = `${product.id}-${selectedSize || 'onesize'}-${selectedColor?.name || 'nocolor'}`;
+    
+    let currentCart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
+
+    const existingItemIndex = currentCart.findIndex(item => item.id === cartItemId);
+
+    if (existingItemIndex > -1) {
+      // Item already exists, update quantity
+      currentCart[existingItemIndex].quantity += quantity;
+    } else {
+      // Add new item
+      const newItem: CartItem = {
+        id: cartItemId,
+        product: product,
+        quantity: quantity,
+        selectedSize: selectedSize || 'One Size', // Ensure selectedSize is a string
+        selectedColor: selectedColor || { name: 'Default', hex: '#000000' }, // Ensure selectedColor is an object
+      };
+      currentCart.push(newItem);
+    }
+
+    localStorage.setItem('cart', JSON.stringify(currentCart));
+    toast({ title: "Added to Cart!", description: `${product.name} (${quantity}) has been added to your cart.`});
   };
 
   const mainImage = product.images[currentImageIndex];
@@ -76,8 +95,8 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
                 fill
                 className="transition-opacity duration-300 object-cover"
                 data-ai-hint={product.dataAiHint || 'clothing detail'}
-                key={mainImage} // Force re-render on image change for transition
-                priority // Consider adding priority for LCP images
+                key={mainImage} 
+                priority 
                 />
             </div>
             {product.images.length > 1 && (
@@ -96,7 +115,7 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
                         fill
                         className="object-cover"
                         data-ai-hint={product.dataAiHint || 'clothing thumbnail'}
-                        sizes="(max-width: 768px) 25vw, (max-width: 1024px) 15vw, 10vw" // Example sizes for thumbnails
+                        sizes="(max-width: 768px) 25vw, (max-width: 1024px) 15vw, 10vw"
                     />
                     </button>
                 ))}
@@ -175,12 +194,12 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
 
           <div className="flex items-center space-x-4">
             <div className="flex items-center border rounded-md">
-              <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="h-10 w-10 rounded-r-none border-r"><span className="text-xl">-</span></Button>
+              <Button variant="ghost" size="icon" onClick={() => setQuantity(Math.max(1, quantity - 1))} className="h-10 w-10 rounded-r-none border-r"><Minus className="h-4 w-4" /></Button>
               <span className="w-12 text-center text-lg font-medium">{quantity}</span>
-              <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} className="h-10 w-10 rounded-l-none border-l"><span className="text-xl">+</span></Button>
+              <Button variant="ghost" size="icon" onClick={() => setQuantity(quantity + 1)} className="h-10 w-10 rounded-l-none border-l"><Plus className="h-4 w-4" /></Button>
             </div>
-            <Button size="lg" onClick={handleAddToCart} className="flex-grow bg-primary hover:bg-accent text-primary-foreground text-base py-3">
-              <ShoppingCart className="mr-2 h-5 w-5" /> Add to Cart
+            <Button size="lg" onClick={handleAddToCart} className="flex-grow bg-primary hover:bg-accent text-primary-foreground text-base py-3" disabled={product.stock === 0}>
+              <ShoppingCart className="mr-2 h-5 w-5" /> {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
             </Button>
             <WishlistButton productId={product.id} className="h-12 w-12 border border-border rounded-md" />
           </div>
@@ -189,7 +208,7 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
             <p className="text-destructive text-sm">Only {product.stock} left in stock!</p>
           )}
           {product.stock === 0 && (
-            <p className="text-destructive text-sm">Out of stock.</p>
+            <p className="text-destructive text-sm font-semibold">Out of stock.</p>
           )}
 
           <Separator className="my-6" />

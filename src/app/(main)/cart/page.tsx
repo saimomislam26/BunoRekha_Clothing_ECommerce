@@ -1,8 +1,8 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { CartItem as CartItemType, Product } from '@/types'; // Renamed to avoid conflict
-import { placeholderProducts } from '@/lib/placeholder-data';
+import type { CartItem as CartItemType } from '@/types'; // Renamed to avoid conflict with potential 'Product' type in scope
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,47 +11,37 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
 
-// Example: Simulate adding items to cart (in real app this would be from state management/API)
-const initialCartData: CartItemType[] = [
-  // {
-  //   product: placeholderProducts[0],
-  //   quantity: 1,
-  //   selectedSize: placeholderProducts[0].availableSizes[0],
-  //   selectedColor: placeholderProducts[0].availableColors[0],
-  //   id: `${placeholderProducts[0].id}-${placeholderProducts[0].availableSizes[0]}-${placeholderProducts[0].availableColors[0].name}`
-  // },
-  // {
-  //   product: placeholderProducts[1],
-  //   quantity: 2,
-  //   selectedSize: placeholderProducts[1].availableSizes[0],
-  //   selectedColor: placeholderProducts[1].availableColors[0],
-  //   id: `${placeholderProducts[1].id}-${placeholderProducts[1].availableSizes[0]}-${placeholderProducts[1].availableColors[0].name}`
-  // }
-];
-
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItemType[]>(initialCartData);
+  const [cartItems, setCartItems] = useState<CartItemType[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
     setIsClient(true);
-    // Load cart from localStorage or global state in a real app
-    // For now, using initialCartData or a similar mock localstorage item
+    // Load cart from localStorage
+    const storedCart = localStorage.getItem('cart');
+    if (storedCart) {
+      setCartItems(JSON.parse(storedCart));
+    }
   }, []);
 
   const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) return; // Or remove item if quantity is 0
-    setCartItems(
-      cartItems.map(item =>
-        item.id === itemId ? { ...item, quantity: newQuantity } : item
-      )
+    if (newQuantity < 1) { // Optionally remove item if quantity goes to 0
+      removeItem(itemId);
+      return;
+    }
+    const updatedCartItems = cartItems.map(item =>
+      item.id === itemId ? { ...item, quantity: newQuantity } : item
     );
+    setCartItems(updatedCartItems);
+    localStorage.setItem('cart', JSON.stringify(updatedCartItems));
   };
 
   const removeItem = (itemId: string) => {
-    setCartItems(cartItems.filter(item => item.id !== itemId));
+    const updatedCartItems = cartItems.filter(item => item.id !== itemId);
+    setCartItems(updatedCartItems);
+    localStorage.setItem('cart', JSON.stringify(updatedCartItems));
     toast({ title: "Item Removed", description: "Item removed from your cart." });
   };
 
@@ -100,8 +90,8 @@ export default function CartPage() {
                   <Image
                     src={item.product.images[0]}
                     alt={item.product.name}
-                    layout="fill"
-                    objectFit="cover"
+                    fill
+                    className="object-cover"
                     data-ai-hint={item.product.dataAiHint || 'clothing item'}
                   />
                 </div>
