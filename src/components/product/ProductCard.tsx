@@ -3,65 +3,57 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Product, CartItemType } from '@/types'; // Updated CartItemType
+import type { Product, StoredCartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Star } from 'lucide-react';
 import WishlistButton from './WishlistButton';
 import { useToast } from "@/hooks/use-toast";
-import { getOrCreateCartId, generateCartItemId } from '@/lib/cart-utils';
+import { generateCartItemId } from '@/lib/cart-utils';
 
 interface ProductCardProps {
   product: Product;
 }
 
+const CART_STORAGE_KEY = 'bunorekhaCart';
+
 const ProductCard = ({ product }: ProductCardProps) => {
   const { toast } = useToast();
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     const selectedSize = product.availableSizes.length > 0 ? product.availableSizes[0] : 'One Size';
     const selectedColor = product.availableColors.length > 0 
       ? product.availableColors[0] 
-      : { name: 'Default', hex: '#000000' }; // Ensure selectedColor is an object
+      : { name: 'Default', hex: '#000000' };
 
-    const cartId = getOrCreateCartId();
-    if (!cartId) {
-        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
-        return;
-    }
-    
-    const itemToAdd = {
+    const itemToAdd: StoredCartItem = {
         productId: product.id,
         quantity: 1,
         selectedSize,
         selectedColor,
+        cartItemId: generateCartItemId(product.id, selectedSize, selectedColor.name),
     };
 
     try {
-        const response = await fetch('/api/cart', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Cart-Id': cartId,
-            },
-            body: JSON.stringify(itemToAdd),
-        });
+        let cart: StoredCartItem[] = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+        const existingItemIndex = cart.findIndex(item => item.cartItemId === itemToAdd.cartItemId);
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to add item to cart');
+        if (existingItemIndex > -1) {
+            cart[existingItemIndex].quantity += itemToAdd.quantity;
+        } else {
+            cart.push(itemToAdd);
         }
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
 
-        // const updatedCart = await response.json(); // You can use updatedCart if needed
         toast({
             title: "Added to Cart!",
             description: `${product.name} has been added to your cart.`,
         });
 
     } catch (error) {
-        console.error("Failed to add to cart:", error);
+        console.error("Failed to add to cart (localStorage):", error);
         toast({
             title: "Error",
-            description: (error as Error).message || "Could not add item to cart.",
+            description: "Could not add item to cart.",
             variant: "destructive",
         });
     }

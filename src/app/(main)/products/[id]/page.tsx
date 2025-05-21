@@ -3,8 +3,8 @@
 
 import { useState, useEffect, use } from 'react';
 import Image from 'next/image';
-import { getProductBySlug, getProductById, placeholderProducts } from '@/lib/placeholder-data';
-import type { Product, CartItem as UICartItemType } from '@/types'; // Renamed to avoid conflict for UI representation
+import { getProductBySlug, getProductById } from '@/lib/placeholder-data';
+import type { Product, StoredCartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Star, ShoppingCart, CheckCircle, ShieldCheck, Truck, Minus, Plus } from 'lucide-react';
 import WishlistButton from '@/components/product/WishlistButton';
@@ -15,8 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import React from 'react';
-import { getOrCreateCartId } from '@/lib/cart-utils';
+import { generateCartItemId } from '@/lib/cart-utils';
 
+const CART_STORAGE_KEY = 'bunorekhaCart';
 
 export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
@@ -40,9 +41,9 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
         setSelectedColor(fetchedProduct.availableColors[0]);
       }
     }
-  }, [currentSlugOrId, selectedSize, selectedColor]); // Removed product from deps to avoid loop with setSelectedColor/Size
+  }, [currentSlugOrId, selectedSize, selectedColor]);
 
-  const handleAddToCart = async () => {
+  const handleAddToCart = () => {
     if (!product) return;
 
     if (product.availableSizes.length > 0 && !selectedSize) {
@@ -53,43 +54,36 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
         toast({ title: "Selection Incomplete", description: "Please select a color.", variant: "destructive" });
         return;
     }
-
-    const cartId = getOrCreateCartId();
-    if (!cartId) {
-        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
-        return;
-    }
     
-    const itemToAdd = {
+    const finalSelectedSize = selectedSize || (product.availableSizes.length > 0 ? product.availableSizes[0] : 'One Size');
+    const finalSelectedColor = selectedColor || (product.availableColors.length > 0 ? product.availableColors[0] : { name: 'Default', hex: '#000000' });
+
+    const itemToAdd: StoredCartItem = {
       productId: product.id,
       quantity: quantity,
-      selectedSize: selectedSize || 'One Size',
-      selectedColor: selectedColor || { name: 'Default', hex: '#000000' },
+      selectedSize: finalSelectedSize,
+      selectedColor: finalSelectedColor,
+      cartItemId: generateCartItemId(product.id, finalSelectedSize, finalSelectedColor.name),
     };
 
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Cart-Id': cartId,
-        },
-        body: JSON.stringify(itemToAdd),
-      });
+      let cart: StoredCartItem[] = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+      const existingItemIndex = cart.findIndex(item => item.cartItemId === itemToAdd.cartItemId);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to add item to cart');
+      if (existingItemIndex > -1) {
+        cart[existingItemIndex].quantity += itemToAdd.quantity;
+      } else {
+        cart.push(itemToAdd);
       }
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
       
-      // const updatedCart = await response.json(); // Can use if needed
       toast({ title: "Added to Cart!", description: `${product.name} (${quantity}) has been added to your cart.`});
 
     } catch (error) {
-      console.error("Failed to add to cart:", error);
+      console.error("Failed to add to cart (localStorage):", error);
       toast({
           title: "Error",
-          description: (error as Error).message || "Could not add item to cart.",
+          description: "Could not add item to cart.",
           variant: "destructive",
       });
     }

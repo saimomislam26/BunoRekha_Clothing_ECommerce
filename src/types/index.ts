@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -22,30 +23,19 @@ export interface Product {
   dataAiHint?: string; // For placeholder image generation
 }
 
-// This represents the item structure within the cart, both on client and in DB
-export interface CartItemType {
-  productId: string; // Reference to Product.id
+// This represents the item structure as stored in localStorage
+export interface StoredCartItem {
+  productId: string; 
   quantity: number;
   selectedSize: string;
   selectedColor: { name: string; hex: string };
-  // Client-side, we might add product details for display, but DB stores only essentials
-  product?: Product; // Optional: populated on client-side for display
-  cartItemId: string; // Unique identifier for this item in this specific cart (e.g., productId-size-color)
+  cartItemId: string; // Unique identifier for this item variant in the cart (e.g., productId-size-color)
 }
 
-// This is what's stored in MongoDB for a cart
-export interface CartDocument {
-  _id?: any; // MongoDB ID
-  cartId: string; // Our unique cart identifier (e.g., from localStorage)
-  items: CartItemType[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// This is what's used on the client-side, merging CartItemType with full Product details
-export interface CartItem extends CartItemType {
+// This is used for UI display after enriching StoredCartItem with full Product details
+export interface CartItem extends StoredCartItem {
   product: Product; // On client, 'product' is non-optional after merging
-  id: string; // Client-side cart item ID (can be same as cartItemId)
+  id: string; // Client-side unique key for React lists (can be same as cartItemId)
 }
 
 

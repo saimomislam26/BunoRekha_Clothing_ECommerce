@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
-import type { CartItem, Product, CartDocument, CartItemType } from '@/types';
+import { useState, useEffect } from 'react';
+import type { StoredCartItem, CartItem, Product } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -10,26 +10,24 @@ import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
-import { getOrCreateCartId } from '@/lib/cart-utils';
 import { placeholderProducts } from '@/lib/placeholder-data'; // To get full product details
 
+const CART_STORAGE_KEY = 'bunorekhaCart';
 
-// Function to merge cart items from DB (which only have product IDs) with full product details
-const enrichCartItems = (dbItems: CartItemType[]): CartItem[] => {
-  return dbItems.map(dbItem => {
-    const productDetail = placeholderProducts.find(p => p.id === dbItem.productId);
+// Function to merge cart items from localStorage with full product details
+const enrichCartItems = (storedItems: StoredCartItem[]): CartItem[] => {
+  return storedItems.map(storedItem => {
+    const productDetail = placeholderProducts.find(p => p.id === storedItem.productId);
     if (!productDetail) {
-      // This case should ideally not happen if product IDs are always valid
-      console.error(`Product with ID ${dbItem.productId} not found for cart item.`);
-      // Fallback or skip item
+      console.error(`Product with ID ${storedItem.productId} not found for cart item.`);
       return null; 
     }
     return {
-      ...dbItem,
+      ...storedItem,
       product: productDetail,
-      id: dbItem.cartItemId, // Use cartItemId as the unique ID on the client for list keys etc.
+      id: storedItem.cartItemId, // Use cartItemId as the unique ID for list keys
     };
-  }).filter(item => item !== null) as CartItem[]; // Filter out any nulls if product wasn't found
+  }).filter(item => item !== null) as CartItem[];
 };
 
 
@@ -40,136 +38,48 @@ export default function CartPage() {
   
 
   useEffect(() => {
-    const fetchCart = async () => {
-      setIsLoading(true);
-      const cartId = getOrCreateCartId();
-      if (!cartId) {
-        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        const response = await fetch('/api/cart', {
-          method: 'GET',
-          headers: { 'X-Cart-Id': cartId },
-        });
-
-        if (!response.ok) {
-          let errorResponseMessage = 'Failed to fetch cart'; // Default message
-          try {
-            const errorData = await response.json();
-            if (errorData && errorData.message) {
-              errorResponseMessage = errorData.message;
-            } else if (errorData && errorData.error) {
-              errorResponseMessage = errorData.error;
-            } else {
-              errorResponseMessage = `Server error: ${response.status} ${response.statusText}`;
-            }
-            console.error('API error response when fetching cart:', errorData);
-          } catch (jsonError) {
-            try {
-              const errorText = await response.text();
-              errorResponseMessage = errorText.substring(0, 200) || `Server error: ${response.status} ${response.statusText}`;
-              console.error('API error text response when fetching cart:', errorText);
-            } catch (textError) {
-               errorResponseMessage = `Server error: ${response.status} ${response.statusText}. Unable to read error body.`;
-               console.error('Failed to read error response body when fetching cart');
-            }
-          }
-          throw new Error(errorResponseMessage);
-        }
-        
-        const data: CartDocument = await response.json();
-        if (data && data.items) {
-            setCartItems(enrichCartItems(data.items));
-        } else {
-            setCartItems([]);
-        }
-      } catch (error) {
-        const errorMessage = (error instanceof Error) ? error.message : "Could not load your cart.";
-        console.error("Error fetching cart:", error);
-        toast({ title: "Error Loading Cart", description: errorMessage, variant: "destructive" });
-        setCartItems([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCart();
+    setIsLoading(true);
+    try {
+      const storedCartJson = localStorage.getItem(CART_STORAGE_KEY);
+      const storedCartItems: StoredCartItem[] = storedCartJson ? JSON.parse(storedCartJson) : [];
+      setCartItems(enrichCartItems(storedCartItems));
+    } catch (error) {
+      console.error("Error loading cart from localStorage:", error);
+      toast({ title: "Error Loading Cart", description: "Could not load your cart.", variant: "destructive" });
+      setCartItems([]); // Ensure cart is empty on error
+    } finally {
+      setIsLoading(false);
+    }
   }, [toast]);
 
-  const updateQuantity = async (cartItemId: string, newQuantity: number) => {
-    const cartId = getOrCreateCartId();
-    if (!cartId) {
-        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
-        return;
-    }
-    if (newQuantity < 0) return;
-
-    try {
-        const response = await fetch('/api/cart', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Cart-Id': cartId,
-            },
-            body: JSON.stringify({ cartItemId, newQuantity }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to update quantity');
-        }
-        const updatedCartData: CartDocument = await response.json();
-        if (updatedCartData && updatedCartData.items) {
-            setCartItems(enrichCartItems(updatedCartData.items));
-        } else {
-             setCartItems([]);
-        }
-        if (newQuantity === 0) {
-            toast({ title: "Item Removed", description: "Item quantity set to 0 and removed." });
-        } else {
-            toast({ title: "Quantity Updated", description: "Item quantity updated in your cart." });
-        }
-    } catch (error) {
-        console.error("Error updating quantity:", error);
-        toast({ title: "Error", description: (error as Error).message || "Could not update quantity.", variant: "destructive"});
-    }
+  const updateCartInStorageAndState = (updatedStoredItems: StoredCartItem[]) => {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedStoredItems));
+    setCartItems(enrichCartItems(updatedStoredItems));
   };
 
-  const removeItem = async (cartItemId: string) => {
-    const cartId = getOrCreateCartId();
-     if (!cartId) {
-        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
-        return;
-    }
-    try {
-        const response = await fetch('/api/cart', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Cart-Id': cartId,
-            },
-            body: JSON.stringify({ cartItemId }),
-        });
+  const updateQuantity = (cartItemId: string, newQuantity: number) => {
+    if (newQuantity < 0) return; // Prevent negative quantity
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Failed to remove item');
-        }
-        const updatedCartData: CartDocument = await response.json();
-         if (updatedCartData && updatedCartData.items) {
-            setCartItems(enrichCartItems(updatedCartData.items));
-        } else {
-             setCartItems([]);
-        }
-        toast({ title: "Item Removed", description: "Item removed from your cart." });
+    const storedCartItems: StoredCartItem[] = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+    let updatedItems: StoredCartItem[];
 
-    } catch (error) {
-        console.error("Error removing item:", error);
-        toast({ title: "Error", description: (error as Error).message || "Could not remove item.", variant: "destructive"});
+    if (newQuantity === 0) {
+      updatedItems = storedCartItems.filter(item => item.cartItemId !== cartItemId);
+      toast({ title: "Item Removed", description: "Item removed from your cart." });
+    } else {
+      updatedItems = storedCartItems.map(item =>
+        item.cartItemId === cartItemId ? { ...item, quantity: newQuantity } : item
+      );
+      toast({ title: "Quantity Updated", description: "Item quantity updated in your cart." });
     }
+    updateCartInStorageAndState(updatedItems);
+  };
+
+  const removeItem = (cartItemId: string) => {
+    const storedCartItems: StoredCartItem[] = JSON.parse(localStorage.getItem(CART_STORAGE_KEY) || '[]');
+    const updatedItems = storedCartItems.filter(item => item.cartItemId !== cartItemId);
+    updateCartInStorageAndState(updatedItems);
+    toast({ title: "Item Removed", description: "Item removed from your cart." });
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
