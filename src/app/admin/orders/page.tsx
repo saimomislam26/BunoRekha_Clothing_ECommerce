@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ShoppingCart } from "lucide-react";
+import OrdersTable from "./components/orders-table";
 
 export default function AdminOrdersPage() {
   return (
@@ -10,23 +11,17 @@ export default function AdminOrdersPage() {
           <ShoppingCart className="mr-3 h-8 w-8 text-primary" />
           Manage Orders
         </h1>
+        {/* Add New Order Button can go here if needed in future */}
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Orders Overview</CardTitle>
+          <CardTitle>All Orders</CardTitle>
           <CardDescription>
-            View and manage customer orders. (Functionality Coming Soon)
+            View and manage all customer orders. (Table uses placeholder data)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            This section will display a list of all orders, allowing you to view details, update statuses, and manage fulfillment.
-            Currently, this is a placeholder page.
-          </p>
-          {/* Placeholder for orders table or list */}
-          <div className="mt-6 p-8 border border-dashed border-border rounded-md text-center text-muted-foreground">
-            Order management features will be implemented here.
-          </div>
+          <OrdersTable />
         </CardContent>
       </Card>
     </div>

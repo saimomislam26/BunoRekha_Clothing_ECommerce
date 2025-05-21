@@ -1,6 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
+import CustomersTable from "./components/customers-table";
 
 export default function AdminCustomersPage() {
   return (
@@ -10,22 +11,17 @@ export default function AdminCustomersPage() {
           <Users className="mr-3 h-8 w-8 text-primary" />
           Manage Customers
         </h1>
+        {/* Add New Customer Button can go here if needed in future */}
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Customer Overview</CardTitle>
+          <CardTitle>All Customers</CardTitle>
           <CardDescription>
-            View and manage customer accounts. (Functionality Coming Soon)
+            View and manage customer accounts. (Table uses placeholder data)
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">
-            This section will display a list of all registered customers, allowing you to view their details, order history, and manage accounts.
-            Currently, this is a placeholder page.
-          </p>
-           <div className="mt-6 p-8 border border-dashed border-border rounded-md text-center text-muted-foreground">
-            Customer management features will be implemented here.
-          </div>
+          <CustomersTable />
         </CardContent>
       </Card>
     </div>
