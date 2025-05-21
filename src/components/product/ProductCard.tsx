@@ -1,15 +1,52 @@
+
+"use client";
+
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Product } from '@/types';
+import type { Product, CartItem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Star } from 'lucide-react';
-import WishlistButton from './WishlistButton'; // Assume this component exists
+import WishlistButton from './WishlistButton';
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   product: Product;
 }
 
 const ProductCard = ({ product }: ProductCardProps) => {
+  const { toast } = useToast();
+
+  const handleAddToCart = () => {
+    const selectedSize = product.availableSizes.length > 0 ? product.availableSizes[0] : 'One Size';
+    const selectedColor = product.availableColors.length > 0 
+      ? product.availableColors[0] 
+      : { name: 'Default', hex: '#000000' };
+
+    const cartItemId = `${product.id}-${selectedSize}-${selectedColor.name}`;
+    
+    let currentCart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existingItemIndex = currentCart.findIndex(item => item.id === cartItemId);
+
+    if (existingItemIndex > -1) {
+      currentCart[existingItemIndex].quantity += 1;
+    } else {
+      const newItem: CartItem = {
+        id: cartItemId,
+        product: product,
+        quantity: 1,
+        selectedSize: selectedSize,
+        selectedColor: selectedColor,
+      };
+      currentCart.push(newItem);
+    }
+
+    localStorage.setItem('cart', JSON.stringify(currentCart));
+    toast({
+      title: "Added to Cart!",
+      description: `${product.name} has been added to your cart.`,
+    });
+  };
+
   return (
     <div className="bg-card rounded-lg shadow-lg overflow-hidden group transition-all duration-300 ease-in-out hover:shadow-primary/20 hover:shadow-2xl transform hover:-translate-y-1">
       <Link href={`/products/${product.slug}`} className="block">
@@ -17,9 +54,8 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <Image
             src={product.images[0]}
             alt={product.name}
-            layout="fill"
-            objectFit="cover"
-            className="transform transition-transform duration-500 ease-in-out group-hover:scale-110"
+            fill
+            className="object-cover transform transition-transform duration-500 ease-in-out group-hover:scale-110"
             data-ai-hint={product.dataAiHint || 'clothing item'}
           />
           {product.originalPrice && (
@@ -61,10 +97,11 @@ const ProductCard = ({ product }: ProductCardProps) => {
           variant="default" 
           className="w-full mt-4 bg-primary hover:bg-accent text-primary-foreground transition-colors duration-300"
           aria-label={`Add ${product.name} to cart`}
-          // onClick={() => console.log(`Add to cart: ${product.id}`)} // Placeholder action
+          onClick={handleAddToCart}
+          disabled={product.stock === 0}
         >
           <ShoppingCart className="mr-2 h-5 w-5" />
-          Add to Cart
+          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
         </Button>
       </div>
     </div>
