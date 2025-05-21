@@ -1,9 +1,9 @@
 
 "use client"; 
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react'; // Added 'use'
 import Image from 'next/image';
-import { getProductBySlug, getProductById } from '@/lib/placeholder-data'; // Assuming slug is used as id for now
+import { getProductBySlug, getProductById } from '@/lib/placeholder-data';
 import type { Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Star, ShoppingCart, CheckCircle, ShieldCheck, Truck } from 'lucide-react';
@@ -14,21 +14,25 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import React from 'react'; // Added React for React.Fragment
 
 // This is a client component because it uses hooks like useState, useEffect
 // and potentially interacts with user actions (size/color selection, add to cart).
 
-export default function ProductDetailPage({ params }: { params: { id: string } }) {
+export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) { // Updated params type
+  const params = use(paramsPromise); // Resolve params using React.use()
+  const currentSlugOrId = params.id; // Use the resolved id
+
   const [product, setProduct] = useState<Product | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<{ name: string; hex: string } | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const { toast } = useToast();
+  const { toast } = useToast();; // Added semicolon
 
   useEffect(() => {
     // params.id is actually the slug from the placeholder data structure
-    const fetchedProduct = getProductBySlug(params.id) || getProductById(params.id);
+    const fetchedProduct = getProductBySlug(currentSlugOrId) || getProductById(currentSlugOrId);
     if (fetchedProduct) {
       setProduct(fetchedProduct);
       if (fetchedProduct.availableSizes.length > 0) {
@@ -38,7 +42,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
         setSelectedColor(fetchedProduct.availableColors[0]);
       }
     }
-  }, [params.id]);
+  }, [currentSlugOrId]);; // Updated dependency and added semicolon
 
   if (!product) {
     return <div className="py-12 text-center">Loading product details or product not found...</div>;
@@ -73,6 +77,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 className="transition-opacity duration-300 object-cover"
                 data-ai-hint={product.dataAiHint || 'clothing detail'}
                 key={mainImage} // Force re-render on image change for transition
+                priority // Consider adding priority for LCP images
                 />
             </div>
             {product.images.length > 1 && (
@@ -91,6 +96,7 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                         fill
                         className="object-cover"
                         data-ai-hint={product.dataAiHint || 'clothing thumbnail'}
+                        sizes="(max-width: 768px) 25vw, (max-width: 1024px) 15vw, 10vw" // Example sizes for thumbnails
                     />
                     </button>
                 ))}
