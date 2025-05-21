@@ -1,0 +1,158 @@
+import type { Product } from '@/types';
+
+export const placeholderProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Golden Weave Saree',
+    description: 'An exquisite saree with intricate golden weave patterns, perfect for festive occasions.',
+    longDescription: 'Crafted from a luxurious silk blend, this saree drapes beautifully and features traditional motifs reinterpreted for the modern woman. The rich charcoal base is illuminated by handwoven golden threads, creating a timeless piece of art. Comes with a matching blouse piece.',
+    price: 299.99,
+    originalPrice: 349.99,
+    images: [
+      'https://placehold.co/600x800/333333/D4AF37.png',
+      'https://placehold.co/600x800/D4AF37/333333.png',
+      'https://placehold.co/600x800/262626/E6B84A.png',
+    ],
+    category: 'Sarees',
+    sizes: ['Free Size'],
+    availableSizes: ['Free Size'],
+    colors: [{ name: 'Charcoal Gold', hex: '#333333' }],
+    availableColors: [{ name: 'Charcoal Gold', hex: '#333333' }],
+    style: 'Ethnic Festive',
+    tags: ['saree', 'ethnic', 'festive', 'gold weave'],
+    rating: 4.8,
+    reviewsCount: 25,
+    stock: 15,
+    isFeatured: true,
+    slug: 'golden-weave-saree',
+    dataAiHint: 'gold saree',
+  },
+  {
+    id: '2',
+    name: 'Charcoal Silk Kurta',
+    description: 'Elegant charcoal silk kurta with subtle gold embroidery.',
+    longDescription: 'This sophisticated kurta is made from pure raw silk, offering a comfortable yet regal feel. The minimalist design is enhanced by delicate gold threadwork around the neckline and cuffs. Ideal for formal gatherings or elegant casual wear.',
+    price: 149.99,
+    images: [
+      'https://placehold.co/600x800/404040/E6B84A.png',
+      'https://placehold.co/600x800/E6B84A/404040.png',
+    ],
+    category: 'Kurtas',
+    sizes: ['S', 'M', 'L', 'XL'],
+    availableSizes: ['M', 'L'],
+    colors: [{ name: 'Deep Charcoal', hex: '#333333' }],
+    availableColors: [{ name: 'Deep Charcoal', hex: '#333333' }],
+    style: 'Modern Ethnic',
+    tags: ['kurta', 'silk', 'charcoal', 'minimalist'],
+    rating: 4.5,
+    reviewsCount: 40,
+    stock: 30,
+    isFeatured: true,
+    slug: 'charcoal-silk-kurta',
+    dataAiHint: 'charcoal kurta',
+  },
+  {
+    id: '3',
+    name: 'Gold Accent Clutch',
+    description: 'A statement clutch in charcoal with a striking gold accent clasp.',
+    longDescription: 'Elevate your evening ensemble with this chic clutch. Made from premium vegan leather, it features a sleek charcoal body and a polished gold geometric clasp. The detachable chain strap offers versatile styling options.',
+    price: 79.99,
+    images: ['https://placehold.co/600x400/2A2A2A/D4AF37.png'],
+    category: 'Accessories',
+    sizes: ['One Size'],
+    availableSizes: ['One Size'],
+    colors: [{ name: 'Charcoal with Gold', hex: '#333333' }],
+    availableColors: [{ name: 'Charcoal with Gold', hex: '#333333' }],
+    style: 'Elegant Evening',
+    tags: ['clutch', 'accessory', 'gold', 'evening wear'],
+    rating: 4.9,
+    reviewsCount: 15,
+    stock: 50,
+    slug: 'gold-accent-clutch',
+    dataAiHint: 'gold clutch',
+  },
+  {
+    id: '4',
+    name: 'Rekha Linen Tunic',
+    description: 'Light and airy linen tunic with subtle line-pattern embroidery.',
+    longDescription: 'Perfect for warm days, this tunic is crafted from breathable linen. It features delicate, hand-stitched line patterns ("Rekha") in a contrasting thread, embodying the BunoRekha aesthetic. Its relaxed fit ensures comfort and style.',
+    price: 119.99,
+    images: [
+      'https://placehold.co/600x800/F0F0F0/333333.png',
+      'https://placehold.co/600x800/E0E0E0/4D4D4D.png',
+    ],
+    category: 'Tops',
+    sizes: ['S', 'M', 'L'],
+    availableSizes: ['S', 'M', 'L'],
+    colors: [{ name: 'Natural Linen', hex: '#F0E68C' }, { name: 'Light Charcoal', hex: '#5A5A5A' }],
+    availableColors: [{ name: 'Natural Linen', hex: '#F0E68C' }, { name: 'Light Charcoal', hex: '#5A5A5A' }],
+    style: 'Casual Chic',
+    tags: ['tunic', 'linen', 'embroidery', 'casual'],
+    rating: 4.3,
+    reviewsCount: 22,
+    stock: 25,
+    isFeatured: true,
+    slug: 'rekha-linen-tunic',
+    dataAiHint: 'linen tunic',
+  },
+  {
+    id: '5',
+    name: 'Buno Weave Scarf',
+    description: 'A soft, handwoven scarf showcasing traditional Buno techniques with modern colors.',
+    longDescription: 'This versatile scarf is a testament to skilled craftsmanship. Woven from a blend of cotton and silk, it is incredibly soft and light. The intricate "Buno" (weave) patterns are highlighted by the interplay of charcoal and gold threads.',
+    price: 65.00,
+    images: [
+      'https://placehold.co/800x600/4D4D4D/E6B84A.png',
+      'https://placehold.co/800x600/D4AF37/333333.png',
+    ],
+    category: 'Accessories',
+    sizes: ['One Size'],
+    availableSizes: ['One Size'],
+    colors: [{ name: 'Charcoal & Gold', hex: '#333333' }],
+    availableColors: [{ name: 'Charcoal & Gold', hex: '#333333' }],
+    style: 'Artisanal',
+    tags: ['scarf', 'handwoven', 'artisanal', 'cotton silk'],
+    rating: 4.7,
+    reviewsCount: 30,
+    stock: 40,
+    slug: 'buno-weave-scarf',
+    dataAiHint: 'woven scarf',
+  },
+  {
+    id: '6',
+    name: 'Modern Gold Hoop Earrings',
+    description: 'Sleek and contemporary gold hoop earrings for everyday elegance.',
+    longDescription: 'These minimalist hoop earrings are crafted from 18k gold-plated sterling silver. Their lightweight design and polished finish make them a perfect accessory for any outfit, adding a touch of understated luxury.',
+    price: 89.00,
+    images: ['https://placehold.co/400x400/E6B84A/FFFFFF.png'],
+    category: 'Jewelry',
+    sizes: ['One Size'],
+    availableSizes: ['One Size'],
+    colors: [{ name: 'Gold', hex: '#D4AF37' }],
+    availableColors: [{ name: 'Gold', hex: '#D4AF37' }],
+    style: 'Minimalist',
+    tags: ['earrings', 'gold', 'hoops', 'jewelry'],
+    rating: 4.6,
+    reviewsCount: 18,
+    stock: 60,
+    isFeatured: false,
+    slug: 'modern-gold-hoop-earrings',
+    dataAiHint: 'gold earrings',
+  },
+];
+
+export const getFeaturedProducts = (): Product[] => {
+  return placeholderProducts.filter(product => product.isFeatured);
+};
+
+export const getAllProducts = (): Product[] => {
+  return placeholderProducts;
+};
+
+export const getProductBySlug = (slug: string): Product | undefined => {
+  return placeholderProducts.find(product => product.slug === slug);
+};
+
+export const getProductById = (id: string): Product | undefined => {
+  return placeholderProducts.find(product => product.id === id);
+};
