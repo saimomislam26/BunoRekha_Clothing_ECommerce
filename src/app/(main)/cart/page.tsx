@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { CartItem as CartItemType } from '@/types'; // Renamed to avoid conflict with potential 'Product' type in scope
+import type { CartItem, Product, CartDocument, CartItemType } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -10,46 +10,147 @@ import { X, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { useToast } from "@/hooks/use-toast";
+import { getOrCreateCartId } from '@/lib/cart-utils';
+import { placeholderProducts } from '@/lib/placeholder-data'; // To get full product details
 
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItemType[]>([]);
-  const [isClient, setIsClient] = useState(false);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   
-  useEffect(() => {
-    setIsClient(true);
-    // Load cart from localStorage
-    const storedCart = localStorage.getItem('cart');
-    if (storedCart) {
-      setCartItems(JSON.parse(storedCart));
-    }
-  }, []);
-
-  const updateQuantity = (itemId: string, newQuantity: number) => {
-    if (newQuantity < 1) { // Optionally remove item if quantity goes to 0
-      removeItem(itemId);
-      return;
-    }
-    const updatedCartItems = cartItems.map(item =>
-      item.id === itemId ? { ...item, quantity: newQuantity } : item
-    );
-    setCartItems(updatedCartItems);
-    localStorage.setItem('cart', JSON.stringify(updatedCartItems));
+  // Function to merge cart items from DB (which only have product IDs) with full product details
+  const enrichCartItems = (dbItems: CartItemType[]): CartItem[] => {
+    return dbItems.map(dbItem => {
+      const productDetail = placeholderProducts.find(p => p.id === dbItem.productId);
+      if (!productDetail) {
+        // This case should ideally not happen if product IDs are always valid
+        console.error(`Product with ID ${dbItem.productId} not found for cart item.`);
+        // Fallback or skip item
+        return null; 
+      }
+      return {
+        ...dbItem,
+        product: productDetail,
+        id: dbItem.cartItemId, // Use cartItemId as the unique ID on the client for list keys etc.
+      };
+    }).filter(item => item !== null) as CartItem[]; // Filter out any nulls if product wasn't found
   };
 
-  const removeItem = (itemId: string) => {
-    const updatedCartItems = cartItems.filter(item => item.id !== itemId);
-    setCartItems(updatedCartItems);
-    localStorage.setItem('cart', JSON.stringify(updatedCartItems));
-    toast({ title: "Item Removed", description: "Item removed from your cart." });
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      setIsLoading(true);
+      const cartId = getOrCreateCartId();
+      if (!cartId) {
+        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/cart', {
+          method: 'GET',
+          headers: { 'X-Cart-Id': cartId },
+        });
+        if (!response.ok) throw new Error('Failed to fetch cart');
+        
+        const data: CartDocument = await response.json();
+        if (data && data.items) {
+            setCartItems(enrichCartItems(data.items));
+        } else {
+            setCartItems([]);
+        }
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+        toast({ title: "Error", description: "Could not load your cart.", variant: "destructive" });
+        setCartItems([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCart();
+  }, [toast]);
+
+  const updateQuantity = async (cartItemId: string, newQuantity: number) => {
+    const cartId = getOrCreateCartId();
+    if (!cartId) {
+        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
+        return;
+    }
+    if (newQuantity < 0) return; // Should be handled by API too, but good client check
+
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Cart-Id': cartId,
+            },
+            body: JSON.stringify({ cartItemId, newQuantity }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to update quantity');
+        }
+        const updatedCartData: CartDocument = await response.json();
+        if (updatedCartData && updatedCartData.items) {
+            setCartItems(enrichCartItems(updatedCartData.items));
+        } else {
+             setCartItems([]); // Or handle as cart becoming empty
+        }
+        if (newQuantity === 0) {
+            toast({ title: "Item Removed", description: "Item quantity set to 0 and removed." });
+        } else {
+            toast({ title: "Quantity Updated", description: "Item quantity updated in your cart." });
+        }
+    } catch (error) {
+        console.error("Error updating quantity:", error);
+        toast({ title: "Error", description: (error as Error).message || "Could not update quantity.", variant: "destructive"});
+    }
+  };
+
+  const removeItem = async (cartItemId: string) => {
+    const cartId = getOrCreateCartId();
+     if (!cartId) {
+        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
+        return;
+    }
+    try {
+        const response = await fetch('/api/cart', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Cart-Id': cartId,
+            },
+            body: JSON.stringify({ cartItemId }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to remove item');
+        }
+        const updatedCartData: CartDocument = await response.json();
+         if (updatedCartData && updatedCartData.items) {
+            setCartItems(enrichCartItems(updatedCartData.items));
+        } else {
+             setCartItems([]);
+        }
+        toast({ title: "Item Removed", description: "Item removed from your cart." });
+
+    } catch (error) {
+        console.error("Error removing item:", error);
+        toast({ title: "Error", description: (error as Error).message || "Could not remove item.", variant: "destructive"});
+    }
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   const shippingCost = subtotal > 50 || subtotal === 0 ? 0 : 10; // Example: Free shipping over $50
   const total = subtotal + shippingCost;
 
-  if (!isClient) {
+  if (isLoading) {
     return <div className="py-12 text-center">Loading cart...</div>;
   }
 
@@ -141,10 +242,14 @@ export default function CartPage() {
               <span>${total.toFixed(2)}</span>
             </div>
           </div>
-          <Button size="lg" className="w-full bg-primary hover:bg-accent text-primary-foreground text-lg py-3">
+          <Button 
+            size="lg" 
+            className="w-full bg-primary hover:bg-accent text-primary-foreground text-lg py-3"
+            onClick={() => toast({ title: "Coming Soon!", description: "Checkout functionality is under development."})}
+            >
             Proceed to Checkout
           </Button>
-          <p className="text-xs text-muted-foreground text-center">Secure payments by Stripe & PayPal.</p>
+          <p className="text-xs text-muted-foreground text-center">Secure payments by Stripe & PayPal (Placeholder).</p>
         </div>
       </div>
     </div>

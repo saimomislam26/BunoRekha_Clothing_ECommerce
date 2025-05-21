@@ -3,8 +3,8 @@
 
 import { useState, useEffect, use } from 'react';
 import Image from 'next/image';
-import { getProductBySlug, getProductById } from '@/lib/placeholder-data';
-import type { Product, CartItem } from '@/types';
+import { getProductBySlug, getProductById, placeholderProducts } from '@/lib/placeholder-data';
+import type { Product, CartItem as UICartItemType } from '@/types'; // Renamed to avoid conflict for UI representation
 import { Button } from '@/components/ui/button';
 import { Star, ShoppingCart, CheckCircle, ShieldCheck, Truck, Minus, Plus } from 'lucide-react';
 import WishlistButton from '@/components/product/WishlistButton';
@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import React from 'react';
+import { getOrCreateCartId } from '@/lib/cart-utils';
+
 
 export default function ProductDetailPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise);
@@ -38,13 +40,9 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
         setSelectedColor(fetchedProduct.availableColors[0]);
       }
     }
-  }, [currentSlugOrId, selectedSize, selectedColor]);
+  }, [currentSlugOrId, selectedSize, selectedColor]); // Removed product from deps to avoid loop with setSelectedColor/Size
 
-  if (!product) {
-    return <div className="py-12 text-center">Loading product details or product not found...</div>;
-  }
-
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
 
     if (product.availableSizes.length > 0 && !selectedSize) {
@@ -56,30 +54,50 @@ export default function ProductDetailPage({ params: paramsPromise }: { params: P
         return;
     }
 
-    const cartItemId = `${product.id}-${selectedSize || 'onesize'}-${selectedColor?.name || 'nocolor'}`;
-    
-    let currentCart: CartItem[] = JSON.parse(localStorage.getItem('cart') || '[]');
-
-    const existingItemIndex = currentCart.findIndex(item => item.id === cartItemId);
-
-    if (existingItemIndex > -1) {
-      // Item already exists, update quantity
-      currentCart[existingItemIndex].quantity += quantity;
-    } else {
-      // Add new item
-      const newItem: CartItem = {
-        id: cartItemId,
-        product: product,
-        quantity: quantity,
-        selectedSize: selectedSize || 'One Size', // Ensure selectedSize is a string
-        selectedColor: selectedColor || { name: 'Default', hex: '#000000' }, // Ensure selectedColor is an object
-      };
-      currentCart.push(newItem);
+    const cartId = getOrCreateCartId();
+    if (!cartId) {
+        toast({ title: "Error", description: "Could not identify cart.", variant: "destructive" });
+        return;
     }
+    
+    const itemToAdd = {
+      productId: product.id,
+      quantity: quantity,
+      selectedSize: selectedSize || 'One Size',
+      selectedColor: selectedColor || { name: 'Default', hex: '#000000' },
+    };
 
-    localStorage.setItem('cart', JSON.stringify(currentCart));
-    toast({ title: "Added to Cart!", description: `${product.name} (${quantity}) has been added to your cart.`});
+    try {
+      const response = await fetch('/api/cart', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Cart-Id': cartId,
+        },
+        body: JSON.stringify(itemToAdd),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to add item to cart');
+      }
+      
+      // const updatedCart = await response.json(); // Can use if needed
+      toast({ title: "Added to Cart!", description: `${product.name} (${quantity}) has been added to your cart.`});
+
+    } catch (error) {
+      console.error("Failed to add to cart:", error);
+      toast({
+          title: "Error",
+          description: (error as Error).message || "Could not add item to cart.",
+          variant: "destructive",
+      });
+    }
   };
+
+  if (!product) {
+    return <div className="py-12 text-center">Loading product details or product not found...</div>;
+  }
 
   const mainImage = product.images[currentImageIndex];
 
