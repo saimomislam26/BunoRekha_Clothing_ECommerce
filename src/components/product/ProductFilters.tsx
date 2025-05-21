@@ -21,6 +21,7 @@ export interface FilterCriteria {
   colors: string[];
   styles: string[];
   priceRange: [number, number];
+  searchQuery?: string; // Added for search functionality
 }
 
 interface ProductFiltersProps {
@@ -48,13 +49,17 @@ const ProductFilters = ({ onApplyFilters, initialFilters }: ProductFiltersProps)
     }
   };
 
-  const handleApplyFilters = () => {
+  const handleApplyFiltersInternal = () => {
+    // This function is called when the "Apply Filters" button is clicked.
+    // It passes the UI-selected filters, not the search query from URL.
+    // The parent component (ProductsPage) will merge this with the URL search query.
     onApplyFilters({
       categories: selectedCategories,
       sizes: selectedSizes,
       colors: selectedColors,
       styles: selectedStyles,
       priceRange,
+      // searchQuery is handled by ProductsPage based on URL
     });
   };
   
@@ -63,18 +68,19 @@ const ProductFilters = ({ onApplyFilters, initialFilters }: ProductFiltersProps)
     setSelectedSizes([]);
     setSelectedColors([]);
     setSelectedStyles([]);
-    setPriceRange([0, 500]); // Reset price range to a default max, or could be dynamic
+    setPriceRange([0, 500]); 
     onApplyFilters({
       categories: [],
       sizes: [],
       colors: [],
       styles: [],
-      priceRange: [0, 1000], // Make sure this max aligns with slider's max
+      priceRange: [0, 1000],
+      searchQuery: initialFilters?.searchQuery || '', // Preserve current search query if needed, or clear it
     });
   };
 
   return (
-    <div className="bg-card p-6 rounded-lg shadow-md sticky top-24"> {/* Added sticky positioning */}
+    <div className="bg-card p-6 rounded-lg shadow-md sticky top-24">
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-semibold text-primary flex items-center">
           <Filter className="mr-2 h-5 w-5" />
@@ -106,8 +112,8 @@ const ProductFilters = ({ onApplyFilters, initialFilters }: ProductFiltersProps)
           <AccordionTrigger className="text-base font-medium hover:text-accent">Price Range</AccordionTrigger>
           <AccordionContent className="pt-4">
             <Slider
-              value={priceRange} // Controlled component
-              max={1000} // Ensure this matches clear filter
+              value={priceRange} 
+              max={1000} 
               step={10}
               onValueChange={(value) => setPriceRange(value as [number, number])}
               className="mb-2"
@@ -168,7 +174,7 @@ const ProductFilters = ({ onApplyFilters, initialFilters }: ProductFiltersProps)
         </AccordionItem>
       </Accordion>
       
-      <Button onClick={handleApplyFilters} className="w-full mt-8 bg-primary hover:bg-accent text-primary-foreground">
+      <Button onClick={handleApplyFiltersInternal} className="w-full mt-8 bg-primary hover:bg-accent text-primary-foreground">
         Apply Filters
       </Button>
     </div>

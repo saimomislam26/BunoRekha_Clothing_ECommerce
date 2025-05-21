@@ -1,9 +1,14 @@
+
+"use client"; // Required for useRouter and useState
+
 import Link from 'next/link';
 import { ShoppingCart, Heart, User, Search, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import NavLink from './NavLink';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Corrected import
 
 const Header = () => {
   const navItems = [
@@ -11,6 +16,21 @@ const Header = () => {
     { href: '/products', label: 'Products' },
     { href: '/contact', label: 'Contact Us' },
   ];
+
+  const router = useRouter();
+  const [desktopSearchTerm, setDesktopSearchTerm] = useState('');
+  const [mobileSearchTerm, setMobileSearchTerm] = useState('');
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+
+  const handleSearch = (term: string) => {
+    if (term.trim()) {
+      router.push(`/products?search=${encodeURIComponent(term.trim())}`);
+      setDesktopSearchTerm(''); // Clear input after search
+      setMobileSearchTerm('');  // Clear input after search
+      setIsSheetOpen(false); // Close sheet if mobile search initiated it
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -35,8 +55,22 @@ const Header = () => {
               type="search"
               placeholder="Search products..."
               className="h-9 w-full md:w-[200px] lg:w-[250px] bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              value={desktopSearchTerm}
+              onChange={(e) => setDesktopSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSearch(desktopSearchTerm);
+                }
+              }}
             />
-            <Button variant="ghost" size="icon" className="text-foreground hover:text-primary h-8 w-8">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-foreground hover:text-primary h-8 w-8"
+              onClick={() => handleSearch(desktopSearchTerm)}
+              aria-label="Search products"
+            >
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
             </Button>
@@ -63,7 +97,7 @@ const Header = () => {
 
           {/* Mobile Menu */}
           <div className="md:hidden">
-            <Sheet>
+            <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-foreground hover:text-primary">
                   <Menu className="h-6 w-6" />
@@ -73,17 +107,33 @@ const Header = () => {
               <SheetContent side="right" className="w-[300px] sm:w-[400px] bg-background p-6">
                 <nav className="flex flex-col space-y-4 mt-8">
                   {navItems.map((item) => (
-                    <NavLink key={item.href} href={item.href} className="text-lg">
-                      {item.label}
-                    </NavLink>
+                     <Link key={item.href} href={item.href} passHref legacyBehavior>
+                        <a onClick={() => setIsSheetOpen(false)} className="text-lg text-foreground/80 hover:text-primary transition-colors">
+                          {item.label}
+                        </a>
+                    </Link>
                   ))}
                   <div className="flex items-center space-x-2 bg-secondary rounded-md p-1 mt-4">
                     <Input
                       type="search"
                       placeholder="Search..."
                       className="h-9 w-full bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      value={mobileSearchTerm}
+                      onChange={(e) => setMobileSearchTerm(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleSearch(mobileSearchTerm);
+                        }
+                      }}
                     />
-                    <Button variant="ghost" size="icon" className="text-foreground hover:text-primary h-8 w-8">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-foreground hover:text-primary h-8 w-8"
+                        onClick={() => handleSearch(mobileSearchTerm)}
+                        aria-label="Search products"
+                    >
                       <Search className="h-5 w-5" />
                       <span className="sr-only">Search</span>
                     </Button>
