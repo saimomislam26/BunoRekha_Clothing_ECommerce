@@ -1,17 +1,18 @@
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import MonthlySalesChart from "./components/monthly-sales-chart";
-import DashboardStatsCards from "./components/dashboard-stats-cards";
-import RecentOrdersTable from "./components/recent-orders-table";
-import { Activity, CreditCard, DollarSign, Users, Package } from "lucide-react";
+// import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// import MonthlySalesChart from "./components/monthly-sales-chart";
+// import DashboardStatsCards from "./components/dashboard-stats-cards";
+// import RecentOrdersTable from "./components/recent-orders-table";
+// import { Activity, CreditCard, DollarSign, Users } from "lucide-react";
 
 export default function AdminDashboardPage() {
   return (
     <div className="space-y-6 py-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+        <h1 className="text-3xl font-bold text-foreground">Admin Dashboard - Minimal Test</h1>
       </div>
 
+      {/*
       <DashboardStatsCards />
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
@@ -60,7 +61,7 @@ export default function AdminDashboardPage() {
       </div>
       
       <RecentOrdersTable />
-
+      */}
     </div>
   );
 }
