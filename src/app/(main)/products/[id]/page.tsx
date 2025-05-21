@@ -1,3 +1,4 @@
+
 "use client"; 
 
 import { useState, useEffect } from 'react';
@@ -12,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from '@/components/ui/separator';
 import { useToast } from "@/hooks/use-toast";
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 // This is a client component because it uses hooks like useState, useEffect
 // and potentially interacts with user actions (size/color selection, add to cart).
@@ -67,9 +69,8 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 <Image
                 src={mainImage}
                 alt={`${product.name} - view ${currentImageIndex + 1}`}
-                layout="fill"
-                objectFit="cover"
-                className="transition-opacity duration-300"
+                fill
+                className="transition-opacity duration-300 object-cover"
                 data-ai-hint={product.dataAiHint || 'clothing detail'}
                 key={mainImage} // Force re-render on image change for transition
                 />
@@ -87,8 +88,9 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                     <Image
                         src={img}
                         alt={`${product.name} thumbnail ${index + 1}`}
-                        layout="fill"
-                        objectFit="cover"
+                        fill
+                        className="object-cover"
+                        data-ai-hint={product.dataAiHint || 'clothing thumbnail'}
                     />
                     </button>
                 ))}
@@ -124,13 +126,15 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
               <RadioGroup value={selectedColor?.name} onValueChange={(value) => setSelectedColor(product.availableColors.find(c => c.name === value) || null)}>
                 <div className="flex flex-wrap gap-2">
                   {product.availableColors.map((color) => (
-                    <RadioGroupItem key={color.name} value={color.name} id={`color-${color.name}`} className="sr-only" aria-label={color.name} />
-                    <Label
-                      htmlFor={`color-${color.name}`}
-                      style={{ backgroundColor: color.hex }}
-                      className={`h-8 w-8 rounded-full border-2 cursor-pointer transition-all ${selectedColor?.name === color.name ? 'ring-2 ring-offset-2 ring-primary border-background' : 'border-card hover:border-primary/50'}`}
-                      title={color.name}
-                    />
+                    <React.Fragment key={color.name}>
+                      <RadioGroupItem value={color.name} id={`color-${color.name}`} className="sr-only" aria-label={color.name} />
+                      <Label
+                        htmlFor={`color-${color.name}`}
+                        style={{ backgroundColor: color.hex }}
+                        className={`h-8 w-8 rounded-full border-2 cursor-pointer transition-all ${selectedColor?.name === color.name ? 'ring-2 ring-offset-2 ring-primary border-background' : 'border-card hover:border-primary/50'}`}
+                        title={color.name}
+                      />
+                    </React.Fragment>
                   ))}
                 </div>
               </RadioGroup>
@@ -143,18 +147,20 @@ export default function ProductDetailPage({ params }: { params: { id: string } }
                 <RadioGroup value={selectedSize || undefined} onValueChange={setSelectedSize}>
                     <div className="flex flex-wrap gap-2">
                     {product.availableSizes.map((size) => (
-                        <RadioGroupItem key={size} value={size} id={`size-${size}`} className="sr-only" aria-label={size}/>
-                        <Label
-                        htmlFor={`size-${size}`}
-                        className={cn(
-                            "px-4 py-2 border rounded-md cursor-pointer transition-colors text-sm",
-                            selectedSize === size
-                            ? "bg-primary text-primary-foreground border-primary"
-                            : "bg-card hover:border-primary/50"
-                        )}
-                        >
-                        {size}
-                        </Label>
+                        <React.Fragment key={size}>
+                          <RadioGroupItem value={size} id={`size-${size}`} className="sr-only" aria-label={size}/>
+                          <Label
+                            htmlFor={`size-${size}`}
+                            className={cn(
+                                "px-4 py-2 border rounded-md cursor-pointer transition-colors text-sm",
+                                selectedSize === size
+                                ? "bg-primary text-primary-foreground border-primary"
+                                : "bg-card hover:border-primary/50"
+                            )}
+                          >
+                            {size}
+                          </Label>
+                        </React.Fragment>
                     ))}
                     </div>
                 </RadioGroup>
