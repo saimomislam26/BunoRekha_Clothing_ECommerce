@@ -67,7 +67,7 @@ export default function AdminLayout({
              {/* You could add a dropdown menu for user profile/logout here */}
           </div>
         </header>
-        <main className="flex-1 p-4 sm:py-4 sm:pr-6">
+        <main className="flex-1 p-4 sm:pl-0 sm:py-4 sm:pr-6">
           {children}
         </main>
         <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground sm:px-6">
