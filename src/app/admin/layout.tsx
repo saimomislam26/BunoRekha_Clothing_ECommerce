@@ -54,7 +54,7 @@ export default function AdminLayout({
         </div>
       </aside>
       <div className="flex flex-1 flex-col sm:pl-64"> {/* Adjust pl for sidebar width */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-4 sm:py-4">
           <div className="sm:hidden">
              {/* Placeholder for mobile menu trigger */}
              <Button variant="outline" size="icon">
@@ -67,10 +67,10 @@ export default function AdminLayout({
              {/* You could add a dropdown menu for user profile/logout here */}
           </div>
         </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-4">
+        <main className="flex-1 p-4 sm:px-4 sm:py-4">
           {children}
         </main>
-        <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground sm:px-6">
+        <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground sm:px-4">
           © {new Date().getFullYear()} BunoRekha Admin Panel
         </footer>
       </div>
