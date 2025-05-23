@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import NavLink from './NavLink';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Corrected import
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; 
+import { auth } from '@/lib/firebase';
+import type { User as FirebaseUser } from 'firebase/auth';
 
 const Header = () => {
   const navItems = [
@@ -21,15 +23,29 @@ const Header = () => {
   const [desktopSearchTerm, setDesktopSearchTerm] = useState('');
   const [mobileSearchTerm, setMobileSearchTerm] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
 
   const handleSearch = (term: string) => {
     if (term.trim()) {
       router.push(`/products?search=${encodeURIComponent(term.trim())}`);
-      setDesktopSearchTerm(''); // Clear input after search
-      setMobileSearchTerm('');  // Clear input after search
-      setIsSheetOpen(false); // Close sheet if mobile search initiated it
+      setDesktopSearchTerm(''); 
+      setMobileSearchTerm('');  
+      setIsSheetOpen(false); 
     }
+  };
+
+  const handleLogout = async () => {
+    await auth.signOut();
+    router.push('/login');
+    setIsSheetOpen(false);
   };
 
   return (
@@ -88,12 +104,21 @@ const Header = () => {
               <span className="sr-only">Cart</span>
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" asChild className="text-foreground hover:text-primary hidden md:inline-flex">
-             <Link href="#"> {/* Placeholder for user account/login */}
+          
+          {currentUser ? (
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="text-foreground hover:text-primary hidden md:inline-flex" title="Logout">
               <User className="h-6 w-6" />
-              <span className="sr-only">Account</span>
+              <span className="sr-only">Logout</span>
+            </Button>
+          ) : (
+            <Button variant="ghost" size="icon" asChild className="text-foreground hover:text-primary hidden md:inline-flex" title="Login">
+             <Link href="/login"> 
+              <User className="h-6 w-6" />
+              <span className="sr-only">Login</span>
             </Link>
           </Button>
+          )}
+
 
           {/* Mobile Menu */}
           <div className="md:hidden">
@@ -138,12 +163,18 @@ const Header = () => {
                       <span className="sr-only">Search</span>
                     </Button>
                   </div>
-                   <Button variant="ghost" asChild className="text-foreground hover:text-primary justify-start text-lg p-2 mt-2">
-                     <Link href="#"> {/* Placeholder for user account/login */}
+                  {currentUser ? (
+                     <Button variant="ghost" onClick={handleLogout} className="text-foreground hover:text-primary justify-start text-lg p-2 mt-2">
+                        <User className="h-6 w-6 mr-3" /> Logout
+                      </Button>
+                  ) : (
+                    <Button variant="ghost" asChild className="text-foreground hover:text-primary justify-start text-lg p-2 mt-2">
+                     <Link href="/login" onClick={() => setIsSheetOpen(false)}> 
                       <User className="h-6 w-6 mr-3" />
-                      Account
+                      Login / Sign Up
                     </Link>
                   </Button>
+                  )}
                 </nav>
               </SheetContent>
             </Sheet>
