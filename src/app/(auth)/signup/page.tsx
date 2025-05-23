@@ -5,15 +5,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label'; // Label not explicitly used, FormLabel is
 import SignInWithGoogleButton from '@/components/auth/SignInWithGoogleButton';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
-// import { createUserWithEmailAndPassword } from 'firebase/auth';
-// import { auth } from '@/lib/firebase';
+// import { createUserWithEmailAndPassword } from 'firebase/auth'; // Firebase auth not used
+// import { auth } from '@/lib/firebase'; // Firebase auth not used
 // import { useRouter } from 'next/navigation';
 
 const signupFormSchema = z.object({
@@ -22,7 +22,7 @@ const signupFormSchema = z.object({
   confirmPassword: z.string()
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"], // path of error
+  path: ["confirmPassword"], 
 });
 
 type SignupFormValues = z.infer<typeof signupFormSchema>;
@@ -41,13 +41,16 @@ export default function SignupPage() {
   });
   
   const onSignupSubmit = async (data: SignupFormValues) => {
-    // Placeholder for email/password signup
     console.log("Signup attempt with:", data);
     toast({
       title: "Sign Up (Placeholder)",
-      description: "Email/password signup is not yet implemented. Use Google Sign-In.",
+      description: "Email/password signup is a placeholder. Actual signup functionality is not implemented.",
     });
     // try {
+    //   if (!auth) {
+    //     toast({ title: "Sign Up Failed", description: "Authentication service not available.", variant: "destructive" });
+    //     return;
+    //   }
     //   await createUserWithEmailAndPassword(auth, data.email, data.password);
     //   toast({ title: "Account Created!", description: "Welcome! You can now log in." });
     //   router.push('/login');

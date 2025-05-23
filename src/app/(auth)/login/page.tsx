@@ -5,15 +5,15 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label'; // Label not explicitly used, FormLabel is
 import SignInWithGoogleButton from '@/components/auth/SignInWithGoogleButton';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
-// import { signInWithEmailAndPassword } from 'firebase/auth';
-// import { auth } from '@/lib/firebase';
+// import { signInWithEmailAndPassword } from 'firebase/auth'; // Firebase auth not used
+// import { auth } from '@/lib/firebase'; // Firebase auth not used
 // import { useRouter } from 'next/navigation';
 
 
@@ -37,13 +37,16 @@ export default function LoginPage() {
   });
 
   const onLoginSubmit = async (data: LoginFormValues) => {
-    // Placeholder for email/password login
     console.log("Login attempt with:", data);
     toast({
       title: "Login (Placeholder)",
-      description: "Email/password login is not yet implemented. Use Google Sign-In.",
+      description: "Email/password login is a placeholder. Actual login functionality is not implemented.",
     });
     // try {
+    //   if (!auth) {
+    //      toast({ title: "Login Failed", description: "Authentication service not available.", variant: "destructive" });
+    //      return;
+    //   }
     //   await signInWithEmailAndPassword(auth, data.email, data.password);
     //   toast({ title: "Logged In!", description: "Welcome back." });
     //   router.push('/');

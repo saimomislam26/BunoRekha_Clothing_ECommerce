@@ -1,24 +1,16 @@
 
-"use client"; // For useRouter and Firebase auth
+"use client"; 
 
-import type { Metadata } from 'next'; // Keep for potential future static metadata
 import Link from 'next/link';
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { auth } from '@/lib/firebase'; // Import Firebase auth
-import { useRouter } from 'next/navigation'; // For redirecting after logout
+// import { auth } from '@/lib/firebase'; // Firebase auth not used
+import { useRouter } from 'next/navigation'; 
 import { useToast } from '@/hooks/use-toast';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect } from 'react';
-import type { User as FirebaseUser } from 'firebase/auth';
+import { useState } from 'react'; // Removed useEffect
+// import type { User as FirebaseUser } from 'firebase/auth'; // FirebaseUser type not used
 
-
-// Static metadata can be exported from client components, but it's usually simpler in server components.
-// For dynamic titles or descriptions based on auth state, you'd handle it differently.
-// export const metadata: Metadata = {
-//   title: 'BunoRekha Admin',
-//   description: 'Admin Dashboard for BunoRekha Style Haus',
-// };
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -36,50 +28,52 @@ export default function AdminLayout({
   const router = useRouter();
   const { toast } = useToast();
   const [isMobileSheetOpen, setIsMobileSheetOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
-  const [isLoadingUser, setIsLoadingUser] = useState(true);
+  // const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null); // Firebase currentUser not used
+  // const [isLoadingUser, setIsLoadingUser] = useState(true); // isLoadingUser not needed without Firebase
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setCurrentUser(user);
-      setIsLoadingUser(false);
-      if (!user) {
-        // Optionally redirect if no user and trying to access admin
-        // router.push('/login'); 
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
+  // useEffect(() => { // Firebase auth state listener removed
+  //   if (auth) {
+  //     const unsubscribe = auth.onAuthStateChanged((user) => {
+  //       setCurrentUser(user);
+  //       setIsLoadingUser(false);
+  //       // if (!user) {
+  //       //   router.push('/login'); 
+  //       // }
+  //     });
+  //     return () => unsubscribe();
+  //   } else {
+  //     setIsLoadingUser(false); // If auth is not available, stop loading
+  //   }
+  // }, [router]);
 
 
   const handleLogout = async () => {
-    try {
-      await auth.signOut();
+    // try { // Firebase signout logic removed
+    //   if (auth) {
+    //     await auth.signOut();
+    //   }
       toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
+        title: 'Logged Out (Placeholder)',
+        description: 'You have been logged out.',
       });
-      router.push('/login'); // Redirect to login page after logout
-    } catch (error: any) {
-      toast({
-        title: 'Logout Failed',
-        description: error.message || 'Could not log out. Please try again.',
-        variant: 'destructive',
-      });
-    }
+      router.push('/login'); 
+    // } catch (error: any) {
+    //   toast({
+    //     title: 'Logout Failed',
+    //     description: error.message || 'Could not log out. Please try again.',
+    //     variant: 'destructive',
+    //   });
+    // }
   };
   
-  if (isLoadingUser) {
-    return (
-      <div className="flex min-h-screen w-full items-center justify-center bg-muted/40">
-        Loading admin panel...
-      </div>
-    );
-  }
+  // if (isLoadingUser) { // isLoadingUser check removed
+  //   return (
+  //     <div className="flex min-h-screen w-full items-center justify-center bg-muted/40">
+  //       Loading admin panel...
+  //     </div>
+  //   );
+  // }
 
-  // Add a check here: if not authenticated, maybe redirect or show a "not authorized" message
-  // For now, we assume if they reach here and currentUser is null, they might just be loading or it's okay for now.
-  // A more robust solution would protect this route.
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
@@ -160,11 +154,12 @@ export default function AdminLayout({
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-sm text-muted-foreground hidden sm:inline">
-              {currentUser ? currentUser.email || 'Admin User' : 'Admin User'}
+              {/* {currentUser ? currentUser.email || 'Admin User' : 'Admin User'} // Firebase currentUser not used */}
+              Admin User
             </span>
           </div>
         </header>
-        <main className="flex-1 p-4 sm:px-6 sm:py-4">
+        <main className="flex-1 p-4 sm:px-4 sm:py-4">
           {children}
         </main>
         <footer className="border-t bg-background p-4 text-center text-sm text-muted-foreground sm:px-6">

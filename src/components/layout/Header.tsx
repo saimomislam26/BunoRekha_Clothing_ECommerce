@@ -1,5 +1,5 @@
 
-"use client"; // Required for useRouter and useState
+"use client"; 
 
 import Link from 'next/link';
 import { ShoppingCart, Heart, User, Search, Menu } from 'lucide-react';
@@ -7,10 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import NavLink from './NavLink';
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect } from 'react';
+import { useState } from 'react'; // Removed useEffect
 import { useRouter } from 'next/navigation'; 
-import { auth } from '@/lib/firebase';
-import type { User as FirebaseUser } from 'firebase/auth';
+// import { auth } from '@/lib/firebase'; // Firebase auth not used
+// import type { User as FirebaseUser } from 'firebase/auth'; // FirebaseUser type not used
 
 const Header = () => {
   const navItems = [
@@ -23,14 +23,16 @@ const Header = () => {
   const [desktopSearchTerm, setDesktopSearchTerm] = useState('');
   const [mobileSearchTerm, setMobileSearchTerm] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null);
+  // const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(null); // Firebase currentUser not used
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setCurrentUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
+  // useEffect(() => { // Firebase auth state listener removed
+  //   if (auth) {
+  //     const unsubscribe = auth.onAuthStateChanged((user) => {
+  //       setCurrentUser(user);
+  //     });
+  //     return () => unsubscribe();
+  //   }
+  // }, []);
 
 
   const handleSearch = (term: string) => {
@@ -42,11 +44,13 @@ const Header = () => {
     }
   };
 
-  const handleLogout = async () => {
-    await auth.signOut();
-    router.push('/login');
-    setIsSheetOpen(false);
-  };
+  // const handleLogout = async () => { // Firebase logout removed
+  //   if (auth) {
+  //      await auth.signOut();
+  //   }
+  //   router.push('/login');
+  //   setIsSheetOpen(false);
+  // };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -105,19 +109,19 @@ const Header = () => {
             </Link>
           </Button>
           
-          {currentUser ? (
+          {/* {currentUser ? ( // Logic based on currentUser removed
             <Button variant="ghost" size="icon" onClick={handleLogout} className="text-foreground hover:text-primary hidden md:inline-flex" title="Logout">
               <User className="h-6 w-6" />
               <span className="sr-only">Logout</span>
             </Button>
-          ) : (
+          ) : ( */}
             <Button variant="ghost" size="icon" asChild className="text-foreground hover:text-primary hidden md:inline-flex" title="Login">
              <Link href="/login"> 
               <User className="h-6 w-6" />
               <span className="sr-only">Login</span>
             </Link>
           </Button>
-          )}
+          {/* )} */}
 
 
           {/* Mobile Menu */}
@@ -163,18 +167,18 @@ const Header = () => {
                       <span className="sr-only">Search</span>
                     </Button>
                   </div>
-                  {currentUser ? (
+                  {/* {currentUser ? ( // Logic based on currentUser removed
                      <Button variant="ghost" onClick={handleLogout} className="text-foreground hover:text-primary justify-start text-lg p-2 mt-2">
                         <User className="h-6 w-6 mr-3" /> Logout
                       </Button>
-                  ) : (
+                  ) : ( */}
                     <Button variant="ghost" asChild className="text-foreground hover:text-primary justify-start text-lg p-2 mt-2">
                      <Link href="/login" onClick={() => setIsSheetOpen(false)}> 
                       <User className="h-6 w-6 mr-3" />
                       Login / Sign Up
                     </Link>
                   </Button>
-                  )}
+                  {/* )} */}
                 </nav>
               </SheetContent>
             </Sheet>
